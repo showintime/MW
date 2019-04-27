@@ -188,6 +188,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		{
 		case MENU_CLEAR:
 		{
+			FILE_NAME[0] = L'\0';
 			clearWndText(hEditWnd);
 			break;
 
@@ -208,9 +209,19 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 			{
 				if (getSaveFiles(hWnd))
 				{
-					write_data(FILE_NAME);
+					int val = GetFileAttributesW(FILE_NAME);
+					if (val > 0)
+					{
+						val = MessageBox(0, L"文件已存在，是否覆盖？", L"警告", MB_OKCANCEL);
+						if (val == IDOK)
+						{
+							write_data(FILE_NAME);
+						}
+					}
+					
+
 				}
-				GetFileAttributes();
+				
 				
 			}
 			else
@@ -225,7 +236,15 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		{
 			if (getSaveFiles(hWnd))
 			{
-				write_data(FILE_NAME);
+				int val = GetFileAttributesW(FILE_NAME);
+				if (val > 0)
+				{
+					val = MessageBox(0, L"文件已存在，是否覆盖？", L"警告", MB_OKCANCEL);
+					if (val == IDOK)
+					{
+						write_data(FILE_NAME);
+					}
+				}
 			}
 
 		}
@@ -397,9 +416,10 @@ void read_data(WCHAR* strfilename)
 	
 	
 	rewind(file);
-	if (_csize <= 0)
+	if (_csize < 0)
 	{
 		fclose(file);
+		MessageBox(0, L"error file read ", L"read_data error", MB_OK);
 		return;
 	}
 	fread(cdata, _csize, 1, file);
@@ -452,7 +472,7 @@ void write_data(WCHAR  *strfilename)
 	int _csize = WideCharToMultiByte(CP_OEMCP, 0, wdata, wcslen(wdata), 0, 0, 0, 0);
 	char* cdata = new char[_csize+1];
 	_csize = WideCharToMultiByte(CP_OEMCP, 0, wdata, wcslen(wdata), cdata, _csize, 0, 0);
-	if (!_csize)
+	if (_csize < 0)
 	{
 		MessageBox(0, L"error file write", L"error", MB_OK);
 		return;
